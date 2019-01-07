@@ -13,7 +13,7 @@ class Players {
     addPlayer(player) {
         return new Promise((res, rej) => {
             this.model.addPlayer(player)
-            .then(data => res(data))
+            .then(data => res(!!data))
         });
     }
 
@@ -33,9 +33,7 @@ class Players {
     setMeeting(playerId, meeting) {
         return new Promise(res => {
             this.model.setCurrentMeetingId(playerId, meeting.id)
-            .then((d) => {
-                res({playerId, meeting});
-            });
+            .then(() => res({playerId, meeting}));
         });
     }
 }

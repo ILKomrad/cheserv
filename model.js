@@ -6,12 +6,14 @@ class Model {
         this.fetch = fetch;
     }
 
-    getMeeting() {
-        return new Promise((res, rej) => {
-            this.fetch(this.url + '?action=getMeeting')
+    getMeeting(playerId) {
+        let url = this.url + '?action=getMeeting';
+
+        if (playerId) {
+            url += '&playerId=' + playerId;
+        }
+        return this.fetch(url)
             .then(res => res.text())
-            .then(body => res(body));
-        });
     }
 
     addMeeting(meeting) {
@@ -28,23 +30,17 @@ class Model {
     }
 
     addGame(game) {
-        return new Promise((res, rej) => {
-            this.sendPost({
-                addGame: game
-            })
-            .then(resp => resp.text())
-            .then(gameId => res(gameId));
+        return this.sendPost({
+            addGame: game
         })
+        .then(resp => resp.text())
     }
 
     addPlayer(player) {
-        return new Promise((res, rej) => {
-            this.sendPost({
-                addPlayer: player
-            })
-            .then(resp => resp.text())
-            .then(body => res(!!body));
-        });
+        return this.sendPost({
+            addPlayer: player
+        })
+        .then(resp => resp.text())
     }
 
     getPlayer(email) {
@@ -53,13 +49,10 @@ class Model {
     }
 
     setCurrentMeetingId(playerId, meetingId) {
-        return new Promise((res, rej) => {
-            this.sendPost({
-                setCurrentMeetingId: {playerId, meetingId}
-            })
-            .then(resp => resp.text())
-            .then(body => res(!!body));
-        });
+        return this.sendPost({
+            setCurrentMeetingId: {playerId, meetingId}
+        })
+        .then(resp => resp.text())
     }
 
     sendPost(data) {

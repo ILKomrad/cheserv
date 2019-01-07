@@ -11,8 +11,8 @@ class Controller {
         this.game = new Game(model);
     }
 
-    getMeeting() {
-        return this.game.getMeeting();
+    getMeeting(playerId) {
+        return this.game.getMeeting(playerId);
     }
 
     newMeeting(data) {
@@ -25,13 +25,13 @@ class Controller {
                     rej(false);
                 }
             })
-            .then(data => {
-                if (data) {
+            .then(data => { 
+                if (data) { //set currentMeetingId at player
                     return this.players.setMeeting(data[1], data[0]);
                 }
             })
             .then(data => {
-                res(data)
+                res(data); //{playerId, meeting}
             });
         })
     }

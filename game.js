@@ -6,8 +6,8 @@ class Game {
         this.gameGenerator = new GameGenerator();
     }
 
-    getMeeting() {
-        return this.model.getMeeting();
+    getMeeting(playerId) {
+        return this.model.getMeeting(playerId);
     }
 
     newMeeting(gameType, player) {
@@ -20,7 +20,8 @@ class Game {
                 return this.model.addMeeting({
                     type: gameType,
                     score: {id: player.id, name: player.name, category: player.category, score: 0},
-                    games: [gameId]
+                    games: [gameId],
+                    firstPlayer: player.id
                 });
             })
             .then(meeting => {

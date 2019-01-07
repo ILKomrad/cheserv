@@ -47,8 +47,8 @@ io.on('connection', function(socket) {
         .then(body => socket.emit('hello', body));
     });
 
-    socket.on('getMeeting', () => {
-        controller.getMeeting()
+    socket.on('getMeeting', ({playerId}) => {
+        controller.getMeeting(playerId)
         .then(body => socket.emit('hello', body));
     });
 
