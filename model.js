@@ -6,6 +6,24 @@ class Model {
         this.fetch = fetch;
     }
 
+    login(id, socketId) {
+        return this.sendPost({
+            login: id,
+            socketId
+        })
+        .then(resp => resp.text())
+    }
+
+    logout(playerId, socketId) {
+        return this.sendPost({
+            logout: {
+                playerId,
+                socketId
+            }
+        })
+        .then(resp => resp.text())
+    }
+
     getMeeting(playerId) {
         let url = this.url + '?action=getMeeting';
 
@@ -29,11 +47,31 @@ class Model {
         });
     }
 
+    selectMeeting(meetingId, playerId) {
+        return this.sendPost({
+            selectMeeting: {meetingId, playerId}
+        })
+        .then(resp => resp.text())
+    }
+
+    findMeeting(meetingId) {
+        let url = this.url + '?action=findMeeting&id=' + meetingId;
+
+        return this.fetch(url)
+            .then(res => res.text())
+    }
+
     addGame(game) {
         return this.sendPost({
             addGame: game
         })
         .then(resp => resp.text())
+    }
+
+    getGame(id) {
+        console.log('id', id);
+        return this.fetch(this.url + '?action=getGame&id=' + id)
+        .then(resp => resp.text());
     }
 
     addPlayer(player) {
@@ -45,6 +83,11 @@ class Model {
 
     getPlayer(email) {
         return this.fetch(this.url + '?action=getPlayer&email=' + email)
+        .then(e => e.text())
+    }
+
+    findPlayerById(id) {
+        return this.fetch(this.url + '?action=findPlayerById&id=' + id)
         .then(e => e.text())
     }
 

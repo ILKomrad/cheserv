@@ -13,7 +13,7 @@ class Game {
     newMeeting(gameType, player) {
         const game = this.gameGenerator.getGame(gameType);
         game.addPlayer(player);
-        
+
         return new Promise((res, rej) => {
             this.model.addGame(game)
             .then(gameId => {
@@ -28,6 +28,22 @@ class Game {
                 res(meeting);
             })
         });
+    }
+
+    getMeetingById(id) {
+        return this.model.getMeetingById(id);
+    }
+
+    selectMeeting(meetingId, playerId) {
+        return this.model.selectMeeting(meetingId, playerId);
+    }
+
+    findMeeting(id) {
+        return this.model.findMeeting(id);
+    }
+
+    getGame(id) {
+        return this.model.getGame(id);
     }
 }
 

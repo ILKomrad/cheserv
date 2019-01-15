@@ -8,7 +8,7 @@ var express = require('express'),
     model = require('./model.js'),
     controller = require('./controller.js')(model, secretKey);
     bodyParser = require('body-parser'),
-    sessionTime = '2h'; //60 = 1minute '2h' - 2hours
+    sessionTime = '365d'; //60 = 1minute '2h' - 2hours
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname + '/index.html'));
@@ -17,9 +17,9 @@ app.get('/', (req, res) => {
 app.use(express.static(__dirname));
 
 io.on('connection', function(socket) {
-    console.log('connect');
+    console.log('connect', socket.id);
     socket.on('auth', (data) => {
-        controller.login(data, sessionTime)
+        controller.login(data, sessionTime, socket.id)
         .then(e => {
             socket.emit('authResult', {user: e.player, token: e.token});
         })
@@ -28,8 +28,12 @@ io.on('connection', function(socket) {
         })
     });
 
+    socket.on('logout', (data) => {
+        controller.logout(data.id, socket.id);
+    });
+
     socket.on('checkAuth', (data) => {
-        controller.checkAuth(data.token)
+        controller.checkAuth(data.token, socket.id)
         .then(d => {
             socket.emit('authResult', d);
         });
@@ -47,6 +51,11 @@ io.on('connection', function(socket) {
         .then(body => socket.emit('hello', body));
     });
 
+    socket.on('getMeetingById', ({playerId}) => {
+        controller.getMeetingById(playerId)
+        .then(body => socket.emit('gameHello', body));
+    })
+
     socket.on('getMeeting', ({playerId}) => {
         controller.getMeeting(playerId)
         .then(body => socket.emit('hello', body));
@@ -61,6 +70,18 @@ io.on('connection', function(socket) {
         .catch(data => {
             socket.emit('meetingAdded', false);
         })
+    });
+
+    socket.on('selectMeeting', (data) => {
+        controller.selectMeeting(data.id, data.userId)
+        .then(data => {
+            socket.to(data.firstPlayer).emit('opponent_step', JSON.stringify(data.meeting));
+            socket.emit('opponent_step', JSON.stringify(data.meeting));
+        });
+    });
+
+    socket.on('disconnect', function() {
+        controller.logout(null, socket.id)
     });
 });
 

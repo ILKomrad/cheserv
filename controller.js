@@ -11,6 +11,31 @@ class Controller {
         this.game = new Game(model);
     }
 
+    getMeetingById(id) {
+        return new Promise(res => {
+            this.players.findPlayerById(id)
+            .then(data => {
+                const player = JSON.parse(data);
+                return this.game.findMeeting(player.currentMeetingId);
+            })
+            .then(meeting => {
+                const data = JSON.parse(meeting),
+                    games = JSON.parse(data.games);
+
+                return Promise.all([
+                    this.game.getGame(games[games.length - 1]),
+                    Promise.resolve(meeting)
+                ]);
+            })
+            .then(data => {
+                res(JSON.stringify({
+                    game: data[0],
+                    meeting: data[1]
+                }));
+            })
+        })
+    }
+
     getMeeting(playerId) {
         return this.game.getMeeting(playerId);
     }
@@ -20,7 +45,8 @@ class Controller {
             this.checkAuth(data.token)
             .then(player => {
                 if (!player.error) {
-                    return Promise.all([this.game.newMeeting(data.gameType, player.user), Promise.resolve(player.user.id)]);
+                    const user = JSON.parse(player.user);
+                    return Promise.all([this.game.newMeeting(data.gameType, user), Promise.resolve(user.id)]);
                 } else {
                     rej(false);
                 }
@@ -34,6 +60,28 @@ class Controller {
                 res(data); //{playerId, meeting}
             });
         })
+    }
+
+    selectMeeting(meetingId, userId) {
+        return new Promise(res => {
+            this.game.selectMeeting(meetingId, userId)
+            .then(d => this.game.findMeeting(meetingId))
+            .then(data => {
+                const meeting = JSON.parse(data);
+                this.players.setMeeting(userId, meeting);
+
+                return Promise.all([
+                    this.players.findPlayerById(meeting.firstPlayer), 
+                    Promise.resolve(meeting)
+                ]);
+            })
+            .then(data => { 
+                const firstPlayer = JSON.parse(data[0]),
+                    meeting = data[1];
+                
+                res({firstPlayer: firstPlayer['socketId'], meeting});
+            });
+        }) 
     }
 
     getPlayers() {
@@ -51,37 +99,52 @@ class Controller {
         });
     }
 
-    login(data, sessionTime) { 
+    login(data, sessionTime, socketId) { 
         return new Promise((res, rej) => {
             this.players.getPlayer(data.email)
             .then(e => {
                 const player = JSON.parse(e);
 
                 if (player.password === data.password) {
-                    const token = jwt.sign(player, this.secretKey, {expiresIn: sessionTime});
-                    res({token, player});
+                    const token = jwt.sign(player, this.secretKey, {expiresIn: sessionTime}); //make token
+                    this.players.login(player.id, socketId)
+                    .then(e => {
+                        if (e) { //ok
+                            res({token, player});
+                        } else {
+                            rej('Data base error');
+                        }
+                    })
                 } else {
                     rej('Password invalid');
                 }
             })
             .catch(error => {
-                rej(error);
+                rej(error); //getPlayer return error === player not found
             })
         });
     }
 
-    checkAuth(token) {
+    logout(playerId, socketId) {
+        this.players.logout(playerId, socketId);
+    }
+
+    checkAuth(token, socketId) {
         return new Promise(res => {
             try {
                 const decoded = jwt.verify(token, this.secretKey);
                 this.players.getPlayer(decoded.email)
-                .then(() => { // ok
-                    res({token: token, user: decoded});
+                .then((player) => { //ok
+                    this.players.login(decoded.id, socketId);
+                    res({token: token, user: player});
                 })
                 .catch((err) => { //decoded email in base is not find or player was deleted
                     res({error: {message: err}});
                 });
             } catch (err) { //invalid token
+                if (err.message === 'jwt expired') {
+
+                }
                 res({error: err});
             }
         })

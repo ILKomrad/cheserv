@@ -17,6 +17,10 @@ class Players {
         });
     }
 
+    findPlayerById(id) {
+        return this.model.findPlayerById(id);
+    }
+
     getPlayer(email) {
         return new Promise((res, rej) => {
             this.model.getPlayer(email)
@@ -28,6 +32,14 @@ class Players {
                 }
             });
         });
+    }
+
+    login(id, socketId) {
+        return this.model.login(id, socketId);
+    }
+
+    logout(playerId, socketId) {
+        return this.model.logout(playerId, socketId)
     }
 
     setMeeting(playerId, meeting) {
